@@ -22,6 +22,6 @@ target_compile_options(common INTERFACE
 )
 
 add_executable(TP1
-    Blasphemous.cpp
+    Tappa01/Blasphemous.cpp
 )
 target_link_libraries(TP1 PRIVATE SFML::Graphics SFML::Audio common)
