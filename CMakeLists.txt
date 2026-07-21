@@ -25,3 +25,8 @@ add_executable(TP1
     Tappa01/main.cpp
 )
 target_link_libraries(TP1 PRIVATE SFML::Graphics SFML::Audio common)
+
+add_executable(TP2
+    Tappa02/main.cpp
+)
+target_link_libraries(TP2 PRIVATE SFML::Graphics SFML::Audio common)
