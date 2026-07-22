@@ -63,7 +63,7 @@ struct Player {
     float speed = 100;      //In pixels per seconds
     float life = 100;
 
-    Spritesheet spritesheet = idle;
+    Spritesheet* spritesheet = &idle;
     sf::Clock animation_clock;
 
     int direction = 1;
@@ -85,14 +85,14 @@ void Player::move(float delta) {
 
 void Player::animate() {
     if (animation_clock.getElapsedTime().asSeconds() > 0.1) {
-        spritesheet.current_frame = (spritesheet.current_frame + 1) % spritesheet.frames.size();
+        spritesheet->current_frame = (spritesheet->current_frame + 1) % spritesheet->frames.size();
         animation_clock.restart();
     }
 }
 
 void Player::draw(sf::RenderWindow& window) {
-    sf::Sprite sprite(spritesheet.texture, spritesheet.frames[spritesheet.current_frame]);
-    sprite.setOrigin({spritesheet.frames[spritesheet.current_frame].size.x / 2.0, spritesheet.frames[spritesheet.current_frame].size.y});
+    sf::Sprite sprite(spritesheet->texture, spritesheet->frames[spritesheet->current_frame]);
+    sprite.setOrigin({spritesheet->frames[spritesheet->current_frame].size.x / 2.f, spritesheet->frames[spritesheet->current_frame].size.y});
     sprite.setPosition(position);
     if (direction == -1) sprite.setScale({-1, 1});
     window.draw(sprite);
