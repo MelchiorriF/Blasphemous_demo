@@ -13,8 +13,8 @@
 
 // Window consts
 const char* window_title = "Blasphemous demo";
-const int window_width = 800;
-const int window_height = 600;
+const int window_width = 1366;
+const int window_height = 768;
 const float max_frame_rate = 60;
 
 // Background consts
@@ -43,19 +43,19 @@ Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames) {
 }
 
 Spritesheet idle = Spritesheet("assets/sprites/player/idle.png", {
-    sf::IntRect({0,0}, {128,128}),
-    sf::IntRect({128,0}, {128,128}),
-    sf::IntRect({256,0}, {128,128}),
-    sf::IntRect({384,0}, {128,128}),
-    sf::IntRect({512,0}, {128,128}),
-    sf::IntRect({640,0}, {128,128}),
-    sf::IntRect({768,0}, {128,128}),
-    sf::IntRect({896,0}, {128,128}),
-    sf::IntRect({0,128}, {128,128}),
-    sf::IntRect({128,128}, {128,128}),
-    sf::IntRect({256,128}, {128,128}),
-    sf::IntRect({384,128}, {128,128}),
-    sf::IntRect({512,128}, {128,128})
+    sf::IntRect({17,40}, {67,72}),
+    sf::IntRect({145,40}, {67,72}),
+    sf::IntRect({273,40}, {67,72}),
+    sf::IntRect({401,40}, {67,72}),
+    sf::IntRect({529,40}, {67,72}),
+    sf::IntRect({657,40}, {67,72}),
+    sf::IntRect({785,40}, {67,72}),
+    sf::IntRect({913,40}, {67,72}),
+    sf::IntRect({17,168}, {67,72}),
+    sf::IntRect({145,168}, {67,72}),
+    sf::IntRect({273,168}, {67,72}),
+    sf::IntRect({401,168}, {67,72}),
+    sf::IntRect({529,168}, {67,72}),
 });
 
 Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
@@ -81,7 +81,7 @@ Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
 
 struct Player {
     sf::Vector2f position;
-    float speed = 100;      //In pixels per seconds
+    float speed = 200;      //In pixels per seconds
     float life = 100;
 
     bool go_left = false;
@@ -95,6 +95,7 @@ struct Player {
     Player(sf::Vector2f position);
 
     void move(float delta);
+    void change_spritesheet();
     void animate();
     void draw(sf::RenderWindow& window);
 };
@@ -108,7 +109,15 @@ void Player::move(float delta) {
     if (go_right) position.x += speed*delta;
 }
 
+void Player::change_spritesheet() {
+    if ((go_left && !go_right) || (!go_left && go_right)) spritesheet = &walking;
+    else spritesheet = &idle;
+}
+
 void Player::animate() {
+    if (go_left && !go_right) direction = -1;
+    else if (!go_left && go_right) direction = 1;
+    
     if (animation_clock.getElapsedTime().asSeconds() > 0.1) {
         spritesheet->current_frame = (spritesheet->current_frame + 1) % spritesheet->frames.size();
         animation_clock.restart();
@@ -117,9 +126,10 @@ void Player::animate() {
 
 void Player::draw(sf::RenderWindow& window) {
     sf::Sprite sprite(spritesheet->texture, spritesheet->frames[spritesheet->current_frame]);
+    if (direction == -1) sprite.setScale({-2.f, 2.f});
+    else sprite.setScale({2.f, 2.f});
     sprite.setOrigin({spritesheet->frames[spritesheet->current_frame].size.x / 2.f, static_cast<float>(spritesheet->frames[spritesheet->current_frame].size.y)});
     sprite.setPosition(position);
-    if (direction == -1) sprite.setScale({-1, 1});
     window.draw(sprite);
 }
 
@@ -148,6 +158,7 @@ void GameState::update(float delta) {
     if(!game_running) return;
 
     player.move(delta);
+    player.change_spritesheet();
     player.animate();
 }
 
