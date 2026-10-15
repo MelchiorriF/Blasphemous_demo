@@ -4,6 +4,8 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <string>
+#include <iostream>
 
 //////////////////////
 // Global constants //
@@ -30,15 +32,17 @@ struct Spritesheet {
     std::vector<sf::IntRect> frames;
     unsigned current_frame = 0;
 
-    Spritesheet(sf::Texture texture, std::vector<sf::IntRect> frames);
+    Spritesheet(std::string path, std::vector<sf::IntRect> frames);
 };
 
-Spritesheet::Spritesheet(sf::Texture texture, std::vector<sf::IntRect> frames) {
-    this->texture = texture;
+Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames) {
+    if (!texture.loadFromFile(path)) {
+        std::cout << "Errore nel caricamento di " << path <<"\n";
+    }
     this->frames = frames;
 }
 
-Spritesheet idle = Spritesheet(sf::Texture("assets/sprites/player/idle.png"), {
+Spritesheet idle = Spritesheet("assets/sprites/player/idle.png", {
     sf::IntRect({0,0}, {128,128}),
     sf::IntRect({128,0}, {128,128}),
     sf::IntRect({256,0}, {128,128}),
@@ -54,6 +58,23 @@ Spritesheet idle = Spritesheet(sf::Texture("assets/sprites/player/idle.png"), {
     sf::IntRect({512,128}, {128,128})
 });
 
+Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
+    sf::IntRect({0,186}, {77,70}),
+    sf::IntRect({223,191}, {76,65}),
+    sf::IntRect({78,51}, {72,67}),
+    sf::IntRect({150,121}, {72,67}),
+    sf::IntRect({0,119}, {77,67}),
+    sf::IntRect({0,52}, {77,67}),
+    sf::IntRect({150,188}, {73,68}),
+    sf::IntRect({77,118}, {72,69}),
+    sf::IntRect({223,126}, {72,65}),
+    sf::IntRect({366,190}, {68,66}),
+    sf::IntRect({223,59}, {72,67}),
+    sf::IntRect({299,190}, {67,66}),
+    sf::IntRect({150,54}, {72,67}),
+    sf::IntRect({78,187}, {72,69})
+});
+
 ////////////
 // Player //
 ////////////
@@ -63,13 +84,16 @@ struct Player {
     float speed = 100;      //In pixels per seconds
     float life = 100;
 
+    bool go_left = false;
+    bool go_right = false;
+
     Spritesheet* spritesheet = &idle;
     sf::Clock animation_clock;
 
-    int direction = 1;
-    bool is_moving = false;
+    int direction = 1;      // 1 when facing right, -1 when facing left
 
     Player(sf::Vector2f position);
+
     void move(float delta);
     void animate();
     void draw(sf::RenderWindow& window);
@@ -80,7 +104,8 @@ Player::Player(sf::Vector2f position) {
 }
 
 void Player::move(float delta) {
-    if (is_moving) position.x += direction * speed * delta;
+    if (go_left) position.x -= speed*delta;
+    if (go_right) position.x += speed*delta;
 }
 
 void Player::animate() {
@@ -92,7 +117,7 @@ void Player::animate() {
 
 void Player::draw(sf::RenderWindow& window) {
     sf::Sprite sprite(spritesheet->texture, spritesheet->frames[spritesheet->current_frame]);
-    sprite.setOrigin({spritesheet->frames[spritesheet->current_frame].size.x / 2.f, spritesheet->frames[spritesheet->current_frame].size.y});
+    sprite.setOrigin({spritesheet->frames[spritesheet->current_frame].size.x / 2.f, static_cast<float>(spritesheet->frames[spritesheet->current_frame].size.y)});
     sprite.setPosition(position);
     if (direction == -1) sprite.setScale({-1, 1});
     window.draw(sprite);
@@ -105,8 +130,9 @@ void Player::draw(sf::RenderWindow& window) {
 struct GameState {
     Player player = Player(player_starting_position);
     bool focus = false;
+    bool game_running = true;
 
-    //void pause_game();
+    void pause_game();
     //void reset_game();
     //void game_over();
     void update(float delta);
@@ -114,7 +140,13 @@ struct GameState {
     void draw(sf::RenderWindow& window);
 };
 
+void GameState::pause_game() {
+    game_running = !game_running;
+}
+
 void GameState::update(float delta) {
+    if(!game_running) return;
+
     player.move(delta);
     player.animate();
 }
@@ -162,32 +194,32 @@ void handle (const sf::Event::KeyPressed& key, GameState& state) {
         return;
 
     switch (key.scancode) {
+    case sf::Keyboard::Scancode::Space:
+        state.pause_game();
+        break;
     case sf::Keyboard::Scancode::Left:
-        state.player.direction = -1;
-        state.player.is_moving = true;
-        return;
+        state.player.go_left = true;
+        break;
     case sf::Keyboard::Scancode::Right:
-        state.player.direction = 1;
-        state.player.is_moving = true;
-        return;
+        state.player.go_right = true;
+        break;
     default:
         return;
     }
 }
 
 // Keyboard input release handle
-void handle (const sf::Event::KeyReleased& key, GameState& state)
-{
+void handle (const sf::Event::KeyReleased& key, GameState& state) {
     if (!state.focus)
         return;
 
     switch (key.scancode) {
     case sf::Keyboard::Scancode::Left:
-        state.player.is_moving = false;
-        return;
+        state.player.go_left = false;
+        break;
     case sf::Keyboard::Scancode::Right:
-        state.player.is_moving = false;
-        return;
+        state.player.go_right = false;
+        break;
     default:
         return;
     }
