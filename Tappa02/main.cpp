@@ -44,35 +44,35 @@ Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames) {
 
 Spritesheet idle = Spritesheet("assets/sprites/player/idle.png", {
     sf::IntRect({17,40}, {67,72}),
-    sf::IntRect({145,40}, {67,72}),
+    //sf::IntRect({145,40}, {67,72}),
     sf::IntRect({273,40}, {67,72}),
-    sf::IntRect({401,40}, {67,72}),
+    //sf::IntRect({401,40}, {67,72}),
     sf::IntRect({529,40}, {67,72}),
-    sf::IntRect({657,40}, {67,72}),
+    //sf::IntRect({657,40}, {67,72}),
     sf::IntRect({785,40}, {67,72}),
-    sf::IntRect({913,40}, {67,72}),
+    //sf::IntRect({913,40}, {67,72}),
     sf::IntRect({17,168}, {67,72}),
-    sf::IntRect({145,168}, {67,72}),
+    //sf::IntRect({145,168}, {67,72}),
     sf::IntRect({273,168}, {67,72}),
-    sf::IntRect({401,168}, {67,72}),
-    sf::IntRect({529,168}, {67,72}),
+    //sf::IntRect({401,168}, {67,72}),
+    sf::IntRect({529,168}, {67,72})
 });
 
 Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
     sf::IntRect({0,186}, {77,70}),
-    sf::IntRect({223,191}, {76,65}),
+    //sf::IntRect({223,191}, {76,65}),
     sf::IntRect({78,51}, {72,67}),
-    sf::IntRect({150,121}, {72,67}),
+    //sf::IntRect({150,121}, {72,67}),
     sf::IntRect({0,119}, {77,67}),
-    sf::IntRect({0,52}, {77,67}),
+    //sf::IntRect({0,52}, {77,67}),
     sf::IntRect({150,188}, {73,68}),
-    sf::IntRect({77,118}, {72,69}),
+    //sf::IntRect({77,118}, {72,69}),
     sf::IntRect({223,126}, {72,65}),
-    sf::IntRect({366,190}, {68,66}),
+    //sf::IntRect({366,190}, {68,66}),
     sf::IntRect({223,59}, {72,67}),
-    sf::IntRect({299,190}, {67,66}),
-    sf::IntRect({150,54}, {72,67}),
-    sf::IntRect({78,187}, {72,69})
+    //sf::IntRect({299,190}, {67,66}),
+    sf::IntRect({150,54}, {72,67})
+    //sf::IntRect({78,187}, {72,69})
 });
 
 ////////////
