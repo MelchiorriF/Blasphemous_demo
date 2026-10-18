@@ -31,16 +31,18 @@ const sf::Vector2f player_starting_position = {window_width/2, ground};
 struct Spritesheet {
     sf::Texture texture;
     std::vector<sf::IntRect> frames;
+    bool looping;
     unsigned current_frame = 0;
 
-    Spritesheet(std::string path, std::vector<sf::IntRect> frames);
+    Spritesheet(std::string path, std::vector<sf::IntRect> frames, bool looping);
 };
 
-Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames) {
+Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames, bool looping) {
     if (!texture.loadFromFile(path)) {
         std::cout << "Errore nel caricamento di " << path <<"\n";
     }
     this->frames = frames;
+    this->looping = looping;
 }
 
 Spritesheet idle = Spritesheet("assets/sprites/player/idle.png", {
@@ -57,7 +59,7 @@ Spritesheet idle = Spritesheet("assets/sprites/player/idle.png", {
     sf::IntRect({273,168}, {67,72}),
     //sf::IntRect({401,168}, {67,72}),
     sf::IntRect({529,168}, {67,72})
-});
+}, true);
 
 Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
     sf::IntRect({0,186}, {77,70}),
@@ -74,7 +76,24 @@ Spritesheet walking = Spritesheet("assets/sprites/player/walking.png", {
     //sf::IntRect({299,190}, {67,66}),
     sf::IntRect({150,54}, {72,67})
     //sf::IntRect({78,187}, {72,69})
-});
+}, true);
+
+Spritesheet jumping = Spritesheet("assets/sprites/player/jumping.png", {
+    sf::IntRect({294,58}, {46,79}),
+    //sf::IntRect({374,115}, {43,75}),
+    sf::IntRect({225,47}, {47,72}),
+    //sf::IntRect({225,119}, {51,68}),
+    sf::IntRect({158,48}, {63,64}),
+    //sf::IntRect({294,137}, {80,53}),
+    sf::IntRect({365,202}, {81,54}),
+    //sf::IntRect({78,191}, {80,64}),
+    sf::IntRect({0,41}, {67,73}),
+    //sf::IntRect({158,184}, {67,72}),
+    sf::IntRect({78,119}, {67,72}),
+    //sf::IntRect({158,112}, {67,72}),
+    sf::IntRect({78,47}, {67,72}),
+    //sf::IntRect({0,114}, {67,73})
+}, false);
 
 ////////////
 // Player //
@@ -96,7 +115,7 @@ struct Player {
     Player(sf::Vector2f position);
 
     void move(float delta);
-    void change_spritesheet();
+    void manage_spritesheet();
     void animate();
     void draw(sf::RenderWindow& window);
 };
@@ -121,17 +140,27 @@ void Player::move(float delta) {
     if (go_right) position.x += speed*delta;
 }
 
-void Player::change_spritesheet() {
-    if ((go_left && !go_right) || (!go_left && go_right)) spritesheet = &walking;
-    else spritesheet = &idle;
+void Player::manage_spritesheet() {
+    if (on_ground) {
+        if ((go_left && !go_right) || (!go_left && go_right)) spritesheet = &walking;
+        else spritesheet = &idle;
+    }
+    else {
+        spritesheet = &jumping;
+    }
 }
 
 void Player::animate() {
     if (go_left && !go_right) direction = -1;
     else if (!go_left && go_right) direction = 1;
     
-    if (animation_clock.getElapsedTime().asSeconds() > 0.1) {
-        spritesheet->current_frame = (spritesheet->current_frame + 1) % spritesheet->frames.size();
+    if (animation_clock.getElapsedTime().asSeconds() > 1) {
+        if (spritesheet->looping) {
+            spritesheet->current_frame = (spritesheet->current_frame + 1) % spritesheet->frames.size();
+        }
+        else if (spritesheet->current_frame < spritesheet->frames.size()-1) {
+            spritesheet->current_frame++;
+        }
         animation_clock.restart();
     }
 }
@@ -170,7 +199,7 @@ void GameState::update(float delta) {
     if(!game_running) return;
 
     player.move(delta);
-    player.change_spritesheet();
+    player.manage_spritesheet();
     player.animate();
 }
 
