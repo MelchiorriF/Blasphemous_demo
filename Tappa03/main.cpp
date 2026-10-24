@@ -13,16 +13,20 @@
 
 // Window consts
 const char* window_title = "Blasphemous demo";
-const int window_width = 1366;
-const int window_height = 768;
+const int window_width = 1280;
+const int window_height = 864;
 const float max_frame_rate = 60;
 
 // Background consts
-const float ground = 700;
+const float ground = 715;
 const float gravity = 1;
 
 // Player consts
 const sf::Vector2f player_starting_position = {window_width/2, ground};
+
+//Background consts
+std::string bg_path = "assets/sprites/other/background1.png";
+sf::IntRect bg_dim({6,4}, {640,432});
 
 /////////////////
 // Spritesheet //
@@ -39,7 +43,8 @@ struct Spritesheet {
 
 Spritesheet::Spritesheet(std::string path, std::vector<sf::IntRect> frames, bool looping) {
     if (!texture.loadFromFile(path)) {
-        std::cout << "Errore nel caricamento di " << path <<"\n";
+        std::cerr << "Errore nel caricamento di " << path << std::endl;
+        exit(1);
     }
     this->frames = frames;
     this->looping = looping;
@@ -102,12 +107,14 @@ Spritesheet jumping = Spritesheet("assets/sprites/player/jumping.png", {
 struct Player {
     sf::Vector2f position;
     float velocity_y = 0;       // To handle jumps
-    float speed = 300;          // In pixels per seconds
+    float speed = 350;          // Horizontal walking speed (in pixels per seconds)
     int direction = 1;          // 1 when facing right, -1 when facing left
-
-    bool go_left = false;
-    bool go_right = false;
     bool on_ground = true;
+
+    // Input hold booleans
+    bool holding_left = false;
+    bool holding_right = false;
+    bool holding_jump = false;
 
     Spritesheet* spritesheet = &idle;
     sf::Clock animation_clock;
@@ -115,6 +122,7 @@ struct Player {
     Player(sf::Vector2f position);
 
     void move(float delta);
+    void start_jump();
     void manage_spritesheet();
     void animate();
     void draw(sf::RenderWindow& window);
@@ -136,13 +144,22 @@ void Player::move(float delta) {
 
     position.y += velocity_y;
 
-    if (go_left) position.x -= speed*delta;
-    if (go_right) position.x += speed*delta;
+    if (holding_left) position.x -= speed*delta;
+    if (holding_right) position.x += speed*delta;
+    if (holding_jump && on_ground) start_jump();
+}
+
+void Player::start_jump() {
+    if (on_ground) {
+        spritesheet = &jumping;
+        spritesheet->current_frame = 0;
+        velocity_y = -20;
+    }
 }
 
 void Player::manage_spritesheet() {
     if (on_ground) {
-        if ((go_left && !go_right) || (!go_left && go_right)) spritesheet = &walking;
+        if ((holding_left && !holding_right) || (!holding_left && holding_right)) spritesheet = &walking;
         else spritesheet = &idle;
     }
     else {
@@ -151,10 +168,10 @@ void Player::manage_spritesheet() {
 }
 
 void Player::animate() {
-    if (go_left && !go_right) direction = -1;
-    else if (!go_left && go_right) direction = 1;
+    if (holding_left && !holding_right) direction = -1;
+    else if (!holding_left && holding_right) direction = 1;
     
-    if (animation_clock.getElapsedTime().asSeconds() > 1) {
+    if (animation_clock.getElapsedTime().asSeconds() > 0.15) {
         if (spritesheet->looping) {
             spritesheet->current_frame = (spritesheet->current_frame + 1) % spritesheet->frames.size();
         }
@@ -174,12 +191,40 @@ void Player::draw(sf::RenderWindow& window) {
     window.draw(sprite);
 }
 
+////////////////
+// Background //
+////////////////
+
+struct Background {
+    sf::Texture bg_texture;
+    sf::Sprite bg_sprite;
+
+    Background(std::string path, sf::IntRect rect);
+
+    void draw(sf::RenderWindow& window);
+};
+
+Background::Background(std::string path, sf::IntRect rect) : bg_sprite(bg_texture, rect) { // Member Initializer List (non esiste costruttore vuoto per sf::Sprite)
+    if(!bg_texture.loadFromFile(path)) {
+        std::cerr << "Errore nel caricamento di " << path << std::endl;
+        exit(1);
+    }
+    bg_sprite.setTexture(bg_texture);
+    bg_sprite.setTextureRect(rect);
+}
+
+void Background::draw(sf::RenderWindow& window) {
+    bg_sprite.setScale({2.f, 2.f});
+    window.draw(bg_sprite);
+}
+
 ///////////////
 // GameState //
 ///////////////
 
 struct GameState {
     Player player = Player(player_starting_position);
+    Background background = Background(bg_path, bg_dim);
     bool focus = false;
     bool game_running = true;
 
@@ -204,6 +249,7 @@ void GameState::update(float delta) {
 }
 
 void GameState::draw(sf::RenderWindow& window) {
+    background.draw(window);
     player.draw(window);
 }
 
@@ -250,13 +296,13 @@ void handle (const sf::Event::KeyPressed& key, GameState& state) {
         state.pause_game();
         break;
     case sf::Keyboard::Scancode::Left:
-        state.player.go_left = true;
+        state.player.holding_left = true;
         break;
     case sf::Keyboard::Scancode::Right:
-        state.player.go_right = true;
+        state.player.holding_right = true;
         break;
     case sf::Keyboard::Scancode::Space:
-        if (state.player.on_ground) state.player.velocity_y = -20;
+        state.player.holding_jump = true;
         break;
     default:
         return;
@@ -270,10 +316,13 @@ void handle (const sf::Event::KeyReleased& key, GameState& state) {
 
     switch (key.scancode) {
     case sf::Keyboard::Scancode::Left:
-        state.player.go_left = false;
+        state.player.holding_left = false;
         break;
     case sf::Keyboard::Scancode::Right:
-        state.player.go_right = false;
+        state.player.holding_right = false;
+        break;
+    case sf::Keyboard::Scancode::Space:
+        state.player.holding_jump = false;
         break;
     default:
         return;
