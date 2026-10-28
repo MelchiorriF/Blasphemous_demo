@@ -33,5 +33,6 @@ target_link_libraries(TP2 PRIVATE SFML::Graphics SFML::Audio common)
 
 add_executable(TP3
     Tappa03/main.cpp
+    Tappa03/player.cpp
 )
 target_link_libraries(TP3 PRIVATE SFML::Graphics SFML::Audio common)
